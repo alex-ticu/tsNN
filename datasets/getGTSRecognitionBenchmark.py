@@ -90,5 +90,5 @@ def translateLabels(datasetPath = DOWNLOAD_PATH):
 
 if __name__ == "__main__":
 
-#	fetchDataset()
+	fetchDataset()
 	translateLabels()
