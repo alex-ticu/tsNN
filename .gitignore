@@ -2,3 +2,4 @@
 /datasets/gtsdb
 /datasets/gtsrb
 *.ipynb_checkpoints
+*.ppm

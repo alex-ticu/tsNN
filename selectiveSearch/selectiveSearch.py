@@ -132,8 +132,8 @@ class SelectiveSearch():
 		for i in range(len(uRegions)):
 			regionPixelIdxs = [pixelIdx for pixelIdx in pixelIdxs[i]]
 			regionPixelVals = [pixelVal for pixelVal in pixelVals[i]]
-			region = Region(uRegions[i], regionPixelIdxs, regionPixelVals, True)
-			region.textureHist = region.getTextureHist(self.image)
+			region = Region(uRegions[i], regionPixelIdxs, regionPixelVals, self.image, True, True)
+#			region.textureHistogram = region.getTextureHist(self.image)
 			regions.append(region)
 
 		newNeighboursList = []
@@ -162,8 +162,11 @@ class SelectiveSearch():
 		for neighbours in self.neighboursList:
 
 			neighbours.colorSimilarity = neighbours.getColorSimilarity()
+			neighbours.textureSimilarity = neighbours.getTextureSimilarity()
+			neighbours.sizeSimilarity = neighbours.getSizeSimilarity(self.width * self.height, self.u)
+			neighbours.fillSimilarity = neighbours.getFillSimilarity(self.width * self.height, self.u)
 
-			neighbours.similarity = neighbours.similarity + neighbours.colorSimilarity
+			neighbours.similarity = neighbours.similarity + neighbours.colorSimilarity + neighbours.textureSimilarity + neighbours.fillSimilarity
 
 			S.append(neighbours.similarity)
 
@@ -185,7 +188,6 @@ class SelectiveSearch():
 					neighbours = nghbrs
 					break
 			print("Index max sim: " + str(S.index(highestSimilarity)))
-			print(type(neighbours))
 			regionA = neighbours.regionA
 			regionB = neighbours.regionB
 
@@ -196,7 +198,7 @@ class SelectiveSearch():
 
 			newRegion = Region(self.u.find(regionA.regionID), regionA.pixelIdxs + regionB.pixelIdxs, regionA.pixelVals + regionB.pixelVals)
 			newRegion.colorHistogram = (self.u.size(regionA.regionID) * regionA.colorHistogram + self.u.size(regionB.regionID) * regionB.colorHistogram) / (self.u.size(regionA.regionID) + self.u.size(regionB.regionID))
-
+			newRegion.textureHistogram = (self.u.size(regionA.regionID) * regionA.textureHistogram + self.u.size(regionB.regionID) * regionB.textureHistogram) / (self.u.size(regionA.regionID) + self.u.size(regionB.regionID))
 			self.regions.append(newRegion)
 
 			newNeighboursList = []
@@ -223,7 +225,10 @@ class SelectiveSearch():
 						S.remove(nghbrs.similarity)
 						neighbour = Neighbours(newRegion, someNeighbours[1])
 						neighbour.colorSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.colorHistogram, neighbour.regionB.colorHistogram)])
-						neighbour.similarity = neighbour.colorSimilarity
+						neighbour.textureSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.textureHistogram, neighbour.regionB.textureHistogram)])
+						neighbour.sizeSimilarity = neighbour.getSizeSimilarity(self.width * self.height, self.u)
+						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u) 
+						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
 #						S.insert(i, neighbour.colorSimilarity)
@@ -234,7 +239,10 @@ class SelectiveSearch():
 						S.remove(nghbrs.similarity)
 						neighbour = Neighbours(newRegion, someNeighbours[0])
 						neighbour.colorSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.colorHistogram, neighbour.regionB.colorHistogram)])
-						neighbour.similarity = neighbour.colorSimilarity
+						neighbour.textureSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.textureHistogram, neighbour.regionB.textureHistogram)])
+						neighbour.sizeSimilarity = neighbour.getSizeSimilarity(self.width * self.height, self.u)
+						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u)
+						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
 #						S.insert(i, neighbour.colorSimilarity)
@@ -245,7 +253,10 @@ class SelectiveSearch():
 						S.remove(nghbrs.similarity)
 						neighbour = Neighbours(newRegion, someNeighbours[1])
 						neighbour.colorSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.colorHistogram, neighbour.regionB.colorHistogram)])
-						neighbour.similarity = neighbour.colorSimilarity
+						neighbour.textureSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.textureHistogram, neighbour.regionB.textureHistogram)])
+						neighbour.sizeSimilarity = neighbour.getSizeSimilarity(self.width * self.height, self.u)
+						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u)
+						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
 #						S.insert(i, neighbour.colorSimilarity)
@@ -256,7 +267,10 @@ class SelectiveSearch():
 						S.remove(nghbrs.similarity)
 						neighbour = Neighbours(newRegion, someNeighbours[0])
 						neighbour.colorSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.colorHistogram, neighbour.regionB.colorHistogram)])
-						neighbour.similarity = neighbour.colorSimilarity
+						neighbour.textureSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.textureHistogram, neighbour.regionB.textureHistogram)])
+						neighbour.sizeSimilarity = neighbour.getSizeSimilarity(self.width * self.height, self.u)
+						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u)
+						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
 #						S.insert(i, neighbour.colorSimilarity)
@@ -268,9 +282,11 @@ class SelectiveSearch():
 
 			print("Whole process took: " + str(time.time() - timer))
 
-#			output = self.paintRegions(BB = True)
-#			saveStr = "output" + str(itera) + ".ppm"
-#			cv2.imwrite(saveStr, output)
+			if itera % 50 == 0:
+
+				output = self.paintRegions(BB = True)
+				saveStr = "output" + str(itera) + ".ppm"
+				cv2.imwrite(saveStr, output)
 
 			itera = itera + 1
 
@@ -312,6 +328,9 @@ class Neighbours():
 		self.regionB = regionB
 		self.similarity = 0
 		self.colorSimilarity = 0
+		self.textureSimilarity = 0
+		self.sizeSimilarity = 0
+		self.fillSimilarity = 0
 
 
 	def getColorSimilarity(self):
@@ -323,16 +342,69 @@ class Neighbours():
 
 		return s
 
+	def getTextureSimilarity(self):
+
+		aHist = self.regionA.textureHistogram
+		bHist = self.regionB.textureHistogram
+
+		s = sum([min(a, b) for a, b in zip(aHist, bHist)])
+
+		return s
+
+	def getSizeSimilarity(self, imgSize, u):
+
+		s = 1.0 - ((u.size(self.regionA.regionID) + u.size(self.regionB.regionID)) / imgSize)
+
+		return s
+
+	def getFillSimilarity(self, imgSize, u):
+
+		boundingBoxA = self.regionA.boundingBox
+		boundingBoxB = self.regionB.boundingBox
+
+		# Bounding box: (topLeft, topRight, bottomLeft, bottomRight)
+		minX = 0
+		minY = 0
+		maxX = 0
+		maxY = 0
+
+		if boundingBoxA[0][0] < boundingBoxB[0][0]:
+			minX = boundingBoxA[0][0]
+		else:
+			minX = boundingBoxB[0][0]
+
+		if boundingBoxA[0][1] < boundingBoxB[0][1]:
+			minY = boundingBoxA[0][1]
+		else:
+			minY = boundingBoxB[0][1]
+
+		if boundingBoxA[3][0] > boundingBoxB[3][0]:
+			maxX = boundingBoxA[3][0]
+		else:
+			maxX = boundingBoxB[3][0]
+
+		if boundingBoxA[3][1] > boundingBoxB[3][1]:
+			maxY = boundingBoxA[3][1]
+		else:
+			maxY = boundingBoxB[3][1]
+
+		boundingBoxSize = (maxX - minX) * (maxY - minY)
+
+		s = 1 - (boundingBoxSize - u.size(regionA.regionID) - u.size(regionB.regionID) / (imgSize))
+
+
 
 class Region():
 
-	def __init__(self, regionID, pixelIdxs, pixelVals, initColorHist = False):
+	def __init__(self, regionID, pixelIdxs, pixelVals, image = None, initColorHist = False, initTextureHist = False):
 		
 		self.regionID = regionID
 		self.pixelIdxs = pixelIdxs
 		self.pixelVals = pixelVals
 		self.boundingBox = self.getBoundingBox()
-		self.textureHist = 0
+		
+		if initTextureHist:
+			self.textureHistogram = self.getTextureHist(image)
 
 		if initColorHist:
 			self.colorHistogram = self.getColorHist()
@@ -418,6 +490,7 @@ class Region():
 				hist = np.concatenate([hist] + [np.histogram(lbpRegion[:, channel, direction], BINS)[0]])
 
 		hist = hist / np.sum(hist)
+#		print("Texture hist: " + str(hist.shape) + " " + str(hist))
 
 		return hist
 
@@ -453,7 +526,7 @@ if __name__ == "__main__":
 	image = cv2.imread("testImg.ppm", cv2.IMREAD_UNCHANGED)
 	image = np.int16(image)
 
-	ss = SelectiveSearch(image, 1, 5000, 2000)
+	ss = SelectiveSearch(image, 1, 5000, 20)
 
 	output = ss.paintRegions(BB = True)
 	cv2.imwrite("output.ppm", output)
