@@ -187,7 +187,7 @@ class SelectiveSearch():
 				if nghbrs.similarity == highestSimilarity:
 					neighbours = nghbrs
 					break
-			print("Index max sim: " + str(S.index(highestSimilarity)))
+
 			regionA = neighbours.regionA
 			regionB = neighbours.regionB
 
@@ -202,24 +202,21 @@ class SelectiveSearch():
 			self.regions.append(newRegion)
 
 			newNeighboursList = []
-#			i = 0
+
 			print("Initial process: " + str(time.time() - timer))
 			time1 = time.time()
 			for nghbrs in self.neighboursList:
-#				print("!")
+
 				someNeighbours = (nghbrs.regionA, nghbrs.regionB)
-#				print("1!")
+
 				if regionA in someNeighbours and regionB in someNeighbours:
 					S.remove(nghbrs.similarity)
 					continue
-#				print("!!")
+
 				if regionA not in someNeighbours and regionB not in someNeighbours:
 					newNeighboursList.append(nghbrs)
-#					i = i + 1
-#					print("2!!")
-#					print("First if: " + str(time.time() - time1))
+
 				else:
-#					print("!!!")
 					if regionA == someNeighbours[0]:
 						time2 = time.time()
 						S.remove(nghbrs.similarity)
@@ -227,13 +224,11 @@ class SelectiveSearch():
 						neighbour.colorSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.colorHistogram, neighbour.regionB.colorHistogram)])
 						neighbour.textureSimilarity = sum([min(a, b) for a, b in zip(neighbour.regionA.textureHistogram, neighbour.regionB.textureHistogram)])
 						neighbour.sizeSimilarity = neighbour.getSizeSimilarity(self.width * self.height, self.u)
-						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u) 
+						neighbour.fillSimilarity = neighbour.getFillSimilarity(self.width * self.height, self.u)
 						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
-#						S.insert(i, neighbour.colorSimilarity)
-#						i = i + 1
-#						print("3!!!" + str(time.time() - time2))
+
 					elif regionA == someNeighbours[1]:
 						time3 = time.time()
 						S.remove(nghbrs.similarity)
@@ -245,9 +240,7 @@ class SelectiveSearch():
 						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
-#						S.insert(i, neighbour.colorSimilarity)
-#						i = i + 1
-#						print("4!!!! " + str(time.time() - time3))
+
 					if regionB == someNeighbours[0]:
 						time4 = time.time()
 						S.remove(nghbrs.similarity)
@@ -259,9 +252,7 @@ class SelectiveSearch():
 						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
-#						S.insert(i, neighbour.colorSimilarity)
-#						i = i + 1
-#						print("5!!!!!" + str(time.time() - time4))
+
 					elif regionB == someNeighbours[1]:
 						time5 = time.time()
 						S.remove(nghbrs.similarity)
@@ -273,10 +264,7 @@ class SelectiveSearch():
 						neighbour.similarity = neighbour.colorSimilarity + neighbour.textureSimilarity + neighbour.sizeSimilarity + neighbour.fillSimilarity
 						newNeighboursList.append(neighbour)
 						S.append(neighbour.similarity)
-#						S.insert(i, neighbour.colorSimilarity)
-#						i = i + 1
-#						print("6!!!!!!" + str(time.time() - time5))
-#			print("i: " + str(i))
+
 
 			self.neighboursList = newNeighboursList
 
@@ -349,11 +337,16 @@ class Neighbours():
 
 		s = sum([min(a, b) for a, b in zip(aHist, bHist)])
 
+
 		return s
 
 	def getSizeSimilarity(self, imgSize, u):
 
-		s = 1.0 - ((u.size(self.regionA.regionID) + u.size(self.regionB.regionID)) / imgSize)
+		boundingBoxA = self.regionA.boundingBox
+		boundingBoxB = self.regionB.boundingBox
+
+		s = 1.0 - (((boundingBoxA[3][0] - boundingBoxA[0][0]) * (boundingBoxA[3][1] - boundingBoxA[0][1]) + (boundingBoxB[3][0] - boundingBoxB[0][0]) * (boundingBoxB[3][1] - boundingBoxB[0][1])) / imgSize)
+
 
 		return s
 
@@ -390,7 +383,11 @@ class Neighbours():
 
 		boundingBoxSize = (maxX - minX) * (maxY - minY)
 
-		s = 1 - (boundingBoxSize - u.size(regionA.regionID) - u.size(regionB.regionID) / (imgSize))
+
+		s = 1 - ((boundingBoxSize - (boundingBoxA[3][0] - boundingBoxA[0][0]) * (boundingBoxA[3][1] - boundingBoxB[0][1]) - (boundingBoxB[3][0] - boundingBoxB[0][0]) * (boundingBoxB[3][1] - boundingBoxB[0][1])) / imgSize)
+
+
+		return s
 
 
 
@@ -526,7 +523,7 @@ if __name__ == "__main__":
 	image = cv2.imread("testImg.ppm", cv2.IMREAD_UNCHANGED)
 	image = np.int16(image)
 
-	ss = SelectiveSearch(image, 1, 5000, 20)
+	ss = SelectiveSearch(image, 1, 2000, 100)
 
 	output = ss.paintRegions(BB = True)
 	cv2.imwrite("output.ppm", output)
