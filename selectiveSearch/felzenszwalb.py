@@ -207,5 +207,5 @@ def segmentImage(image, sigma, c, minSize):
 	return output
 
 if __name__ == "__main__":
-	image = segmentImage("../testImg.ppm", 1, 5000, 2000)
-	cv2.imwrite("../output2.ppm", image)
+	image = segmentImage("testImg.ppm", 1, 5000, 2000)
+	cv2.imwrite("output2.ppm", image)
