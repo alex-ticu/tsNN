@@ -2,8 +2,9 @@ from felzenszwalb import segmentGraph
 from felzenszwalb import edge
 import cv2
 import numpy as np
-from skimage.feature import local_binary_pattern
+#from skimage.feature import local_binary_pattern
 import time
+import random
 
 class SelectiveSearch():
 
@@ -158,6 +159,10 @@ class SelectiveSearch():
 	def HierarhicalGrouping(self):
 
 		S = []
+		boxes = []
+
+		for region in self.regions:
+			boxes.append(region.boundingBox)
 
 		for neighbours in self.neighboursList:
 
@@ -200,6 +205,8 @@ class SelectiveSearch():
 			newRegion.colorHistogram = (self.u.size(regionA.regionID) * regionA.colorHistogram + self.u.size(regionB.regionID) * regionB.colorHistogram) / (self.u.size(regionA.regionID) + self.u.size(regionB.regionID))
 			newRegion.textureHistogram = (self.u.size(regionA.regionID) * regionA.textureHistogram + self.u.size(regionB.regionID) * regionB.textureHistogram) / (self.u.size(regionA.regionID) + self.u.size(regionB.regionID))
 			self.regions.append(newRegion)
+
+			boxes.append(newRegion.boundingBox)
 
 			newNeighboursList = []
 
@@ -270,16 +277,22 @@ class SelectiveSearch():
 
 			print("Whole process took: " + str(time.time() - timer))
 
-			if itera % 50 == 0:
+#			if itera % 50 == 0:
 
-				output = self.paintRegions(BB = True)
-				saveStr = "output" + str(itera) + ".ppm"
-				cv2.imwrite(saveStr, output)
+#				output = self.paintRegions(BB = True)
+#				saveStr = "output" + str(itera) + ".ppm"
+#				cv2.imwrite(saveStr, output)
 
 			itera = itera + 1
 
+		random.shuffle(boxes)
+		print(len(boxes))
 
+		uniqueBoxes = []
+		[uniqueBoxes.append(box) for box in boxes if box not in uniqueBoxes]
+		print(len(uniqueBoxes))
 
+		return uniqueBoxes
 
 	def paintRegions(self, BB = False):
 
@@ -518,14 +531,53 @@ class Region():
 		return boundingBox
 
 
+def filterBoxes(boxes, minSize, minRatio = None, topN = None):
+
+	proposal = []
+
+	for box in boxes:
+		# Calculate width and height of the box
+		w = box[3][0] - box[0][0]
+		h = box[3][1] - box[0][1]
+
+		# Filter for size
+		if w < minSize or h < minSize:
+			continue
+
+		# Filter for box ratio
+		if minRatio:
+			if w / h < minRatio or h / w < minRatio:
+				continue
+
+		proposal.append(box)
+
+	if topN:
+		if topN <= len(proposal):
+			return proposal[:topN]
+		else:
+			return proposal
+	else:
+		return proposal
+
 if __name__ == "__main__":
 
 	image = cv2.imread("testImg.ppm", cv2.IMREAD_UNCHANGED)
 	image = np.int16(image)
+	output2 = cv2.imread("testImg.ppm", cv2.IMREAD_UNCHANGED)
 
 	ss = SelectiveSearch(image, 1, 2000, 100)
 
 	output = ss.paintRegions(BB = True)
 	cv2.imwrite("output.ppm", output)
 
-	ss.HierarhicalGrouping()
+	boxes = ss.HierarhicalGrouping()
+	topNBoxes = filterBoxes(boxes, minSize = 100, minRatio = 0.3)
+
+	for bb in topNBoxes:
+		print("Bounding box: " + str(bb))
+		topLeft = bb[0]
+		bottomRight = bb[3]
+
+		output2 = cv2.rectangle(output, topLeft, bottomRight, (255, 0, 0), 2)
+
+	cv2.imwrite("outBoxes.ppm", output2)
